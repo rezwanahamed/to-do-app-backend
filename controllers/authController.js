@@ -96,7 +96,7 @@ exports.verifyTwoFactorCode = async (req, res) => {
     const token = generateToken(user._id);
 
     res.status(200).json({
-      status: "success",
+      status: 200,
       token,
       user: {
         id: user._id,
@@ -151,7 +151,7 @@ exports.login = async (req, res) => {
     await emailService.sendVerificationCode(email, code);
 
     res.status(200).json({
-      status: "success",
+      status: 200,
       message: "Verification code sent to your email",
       userId: user._id,
     });
@@ -168,10 +168,9 @@ exports.login = async (req, res) => {
 // Verify email code
 exports.verifyEmailCode = async (req, res) => {
   try {
-    const { email, code } = req.body;
-
+    const { userId, code } = req.body;
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
         status: "error",
@@ -179,8 +178,9 @@ exports.verifyEmailCode = async (req, res) => {
       });
     }
 
+    const parsedCode = parseInt(user.otp.code);
     // Check if code exists and is valid
-    if (!user.otp || parseInt(user.otp.code) !== code) {
+    if (parsedCode !== parseInt(code)) {
       return res.status(401).json({
         status: "error",
         message: "Invalid verification code",
@@ -203,7 +203,7 @@ exports.verifyEmailCode = async (req, res) => {
 
     // Code is valid, proceed to 2FA step
     res.status(200).json({
-      status: "success",
+      status: 200,
       message: "Email code verified successfully",
       userId: user._id,
       requiresTwoFactor: user.isTwoFactorEnabled,
