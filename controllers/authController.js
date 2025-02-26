@@ -179,6 +179,7 @@ exports.verifyEmailCode = async (req, res) => {
     }
 
     const parsedCode = parseInt(user.otp.code);
+
     // Check if code exists and is valid
     if (parsedCode !== parseInt(code)) {
       return res.status(401).json({
@@ -198,7 +199,9 @@ exports.verifyEmailCode = async (req, res) => {
     }
 
     // Clean up used code
+    const token = generateToken(user._id);
     user.otp = undefined;
+    user.twoFactorSecret = token;
     await user.save();
 
     // Code is valid, proceed to 2FA step
@@ -206,6 +209,7 @@ exports.verifyEmailCode = async (req, res) => {
       status: 200,
       message: "Email code verified successfully",
       userId: user._id,
+      accessToken: token,
       requiresTwoFactor: user.isTwoFactorEnabled,
     });
   } catch (error) {
