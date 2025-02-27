@@ -180,7 +180,7 @@ exports.updateTodo = async (req, res) => {
     if (!todo) {
       return res.status(404).json({
         status: "error",
-        message: "Todo not found"
+        message: "Todo not found",
       });
     }
 
