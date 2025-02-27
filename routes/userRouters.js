@@ -8,6 +8,6 @@ const router = express.Router();
 router.use(protect);
 
 router.route("/profile").get(userController.fetchUserData);
-router.route("/update").put(userController.updatedUser);
+router.route("/profile-update").put(userController.updatedUser);
 
 module.exports = router;

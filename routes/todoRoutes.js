@@ -8,7 +8,8 @@ const router = express.Router();
 router.use(protect);
 
 // Todo routes
-router.route("/").get(todoController.getTodos).post(todoController.createTodo);
+router.route("/add-todo").post(todoController.createTodo);
+router.route("/get-todo").get(todoController.getTodos);
 
 router
 	.route("/:id")
