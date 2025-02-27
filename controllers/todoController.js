@@ -29,7 +29,7 @@ exports.createTodo = async (req, res) => {
       dueDate,
       status,
       priority,
-      user: userId
+      user: userId,
     });
 
     // If user has connected Google Calendar, create event
