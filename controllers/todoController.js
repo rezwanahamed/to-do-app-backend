@@ -93,8 +93,8 @@ exports.getTodos = async (req, res) => {
     // Build filter query
     const query = { user: userId };
 
-    if (status) query.status = status;
-    if (priority) query.priority = priority;
+    if (status) query.status = { $in: status.split(",") };
+    if (priority) query.priority = { $in: priority.split(",") };
     if (date) {
       const startDate = new Date(date);
       const endDate = new Date(date);
@@ -173,7 +173,7 @@ exports.updateTodo = async (req, res) => {
     // Find and update todo
     const todo = await Todo.findOneAndUpdate(
       { _id: todoId, user: userId },
-      updates,
+      { $set: updates },
       { new: true, runValidators: true }
     );
 
