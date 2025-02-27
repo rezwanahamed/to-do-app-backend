@@ -107,7 +107,7 @@ exports.getTodos = async (req, res) => {
     }
 
     // Get todos from database
-    let todosQuery = Todo.find(query).sort({ dueDate: 1 });
+    let todosQuery = Todo.find(query).sort({ dueDate: -1 });
 
     // Apply limit if provided
     if (limit) {

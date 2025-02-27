@@ -11,6 +11,7 @@ router.use(protect);
 router.route("/add-todo").post(todoController.createTodo);
 router.route("/get-todo").get(todoController.getTodos);
 
+
 router
 	.route("/:id")
 	.get(todoController.getTodo)
