@@ -96,9 +96,26 @@ exports.getTodos = async (req, res) => {
     if (status) query.status = { $in: status.split(",") };
     if (priority) query.priority = { $in: priority.split(",") };
     if (date) {
-      const startDate = new Date(date);
-      const endDate = new Date(date);
-      endDate.setDate(endDate.getDate() + 1);
+      const today = new Date();
+      let startDate, endDate;
+
+      if (date === "today") {
+        startDate = new Date(today.setHours(0, 0, 0, 0));
+        endDate = new Date(today.setHours(23, 59, 59, 999));
+      } else if (date === "thisWeek") {
+        startDate = new Date(today.setDate(today.getDate() - today.getDay()));
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(today.setDate(today.getDate() - today.getDay() + 6));
+        endDate.setHours(23, 59, 59, 999);
+      } else if (date === "thisMonth") {
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        startDate = new Date(date);
+        endDate = new Date(date);
+        endDate.setDate(endDate.getDate() + 1);
+      }
 
       query.dueDate = {
         $gte: startDate,
