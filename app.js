@@ -12,13 +12,11 @@ const indexRouter = require("./routes/index");
 const cors = require("cors");
 
 const app = express();
-app.use(
-  cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors({
+  origin: 'https://to-do-app-frontend-gules.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 
 // Connect to MongoDB
 connectDB(process.env.MONGODB_URI);
