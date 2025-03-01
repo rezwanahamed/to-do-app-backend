@@ -1,16 +1,19 @@
 const Todo = require("../models/todoModel");
 const { google } = require("googleapis");
+const User = require("../models/userModel");
 
 // Set up Google Calendar API
-const getGoogleCalendarClient = async (refreshToken) => {
+const getGoogleCalendarClient = async (user) => {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
     `${process.env.CLIENT_URL}/auth/google-callback`
   );
 
+  // Use the updated schema structure
   oauth2Client.setCredentials({
-    refresh_token: refreshToken,
+    refresh_token: user.googleAuth.refresh_token,
+    access_token: user.googleAuth.access_token
   });
 
   return google.calendar({ version: "v3", auth: oauth2Client });
@@ -32,12 +35,10 @@ exports.createTodo = async (req, res) => {
       user: userId,
     });
 
-    // If user has connected Google Calendar, create event
-    if (req.user.googleCalendarConnected && req.user.googleRefreshToken) {
+    // Check if user has connected Google Calendar using the new schema structure
+    if (req.user.googleAuth && req.user.googleAuth.connected && req.user.googleAuth.refresh_token) {
       try {
-        const calendar = await getGoogleCalendarClient(
-          req.user.googleRefreshToken
-        );
+        const calendar = await getGoogleCalendarClient(req.user);
 
         // Create event in Google Calendar
         const event = {
@@ -201,16 +202,15 @@ exports.updateTodo = async (req, res) => {
       });
     }
 
-    // If user has connected Google Calendar and todo has a Google event ID, update event
+    // Check if user has connected Google Calendar using the new schema structure
     if (
-      req.user.googleCalendarConnected &&
-      req.user.googleRefreshToken &&
+      req.user.googleAuth && 
+      req.user.googleAuth.connected && 
+      req.user.googleAuth.refresh_token &&
       todo.googleEventId
     ) {
       try {
-        const calendar = await getGoogleCalendarClient(
-          req.user.googleRefreshToken
-        );
+        const calendar = await getGoogleCalendarClient(req.user);
 
         // Get current event
         await calendar.events.get({
@@ -276,16 +276,15 @@ exports.deleteTodo = async (req, res) => {
       });
     }
 
-    // If user has connected Google Calendar and todo has a Google event ID, delete event
+    // Check if user has connected Google Calendar using the new schema structure
     if (
-      req.user.googleCalendarConnected &&
-      req.user.googleRefreshToken &&
+      req.user.googleAuth && 
+      req.user.googleAuth.connected && 
+      req.user.googleAuth.refresh_token &&
       todo.googleEventId
     ) {
       try {
-        const calendar = await getGoogleCalendarClient(
-          req.user.googleRefreshToken
-        );
+        const calendar = await getGoogleCalendarClient(req.user);
 
         // Delete event from Google Calendar
         await calendar.events.delete({
@@ -314,4 +313,40 @@ exports.deleteTodo = async (req, res) => {
       message: "Failed to delete todo",
     });
   }
+};
+
+// Helper function to handle token refresh if needed
+// eslint-disable-next-line no-unused-vars
+const refreshTokenIfNeeded = async (user) => {
+  // Check if token is expired or about to expire (5-minute buffer)
+  if (user.googleAuth.expiry_date && Date.now() >= user.googleAuth.expiry_date - 300000) {
+    try {
+      const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        `${process.env.CLIENT_URL}/auth/google-callback`
+      );
+      
+      oauth2Client.setCredentials({
+        refresh_token: user.googleAuth.refresh_token
+      });
+      
+      const { tokens } = await oauth2Client.refreshAccessToken();
+      
+      // Update user's tokens in the database
+      await User.findByIdAndUpdate(user._id, {
+        'googleAuth.access_token': tokens.access_token,
+        'googleAuth.expiry_date': tokens.expiry_date,
+        'googleAuth.lastSyncTime': new Date()
+      });
+      
+      return tokens;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to refresh token:', error);
+      return null;
+    }
+  }
+  
+  return null;
 };
