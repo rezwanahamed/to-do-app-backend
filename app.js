@@ -14,9 +14,8 @@ const cors = require("cors");
 const app = express();
 app.use(
   cors({
-    origin: "https://to-do-app-frontend-gules.vercel.app",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   })
 );
 
